@@ -12,7 +12,7 @@
 
 <body data-bs-theme="dark">
     <?php
-    include "includes/classes/gportal.class.php";
+    include "gportal.class.php";
 
     $gportal = new GPORTAL_AUTH();
 
