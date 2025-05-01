@@ -31,7 +31,6 @@ class GPORTAL_AUTH
         }
     }
 
-
     public function log($message): void
     {
         $timestamp = date('Y-m-d H:i:s');
@@ -43,7 +42,6 @@ class GPORTAL_AUTH
             error_log("Log Write Failed: " . $e->getMessage());
         }
     }
-
 
     public function login(string $username, string $password)
     {
@@ -244,7 +242,6 @@ class GPORTAL_AUTH
         }
     }
 
-
     public function fetchServers()
     {
         if (!$this->isTokenValid()) {
@@ -304,7 +301,6 @@ class GPORTAL_AUTH
         return $servers;
     }
 
-
     public function fetchStatus($sid, $region)
     {
         if (!$this->isTokenValid()) {
@@ -347,6 +343,46 @@ class GPORTAL_AUTH
         return $responseData;
     }
 
+    public function getUser($region)
+    {
+        if (!$this->isTokenValid()) {
+            $this->refreshToken();
+        }
+        $token = $this->getAccessToken();
+        $url = self::GPORTAL_API_URL;
+        $data = [
+            "operationName" => "me",
+            "variables" => [
+                'region' => $region,
+            ],
+            "query" => "query me(\$region: REGION!) {\n  me(region: \$region) {\n    jwt {\n      id\n      email\n      username\n      hasAllServiceAccess\n      __typename\n    }\n    __typename\n  }\n}"
+        ];
+        $options = [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($data),
+        ];
+        $ch = curl_init();
+        curl_setopt_array($ch, $options);
+        $response = curl_exec($ch);
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return "cURL Error: $error";
+        }
+        curl_close($ch);
+        $responseData = json_decode($response, true);
+        if (isset($responseData['errors'])) {
+            return $responseData['errors'][0]['message'];
+        }
+        return $responseData['data']['me']['jwt'];
+    }
+
     public function isTokenValid(): bool
     {
         if (isset($_SESSION[$this->sessionTokenKey])) {
@@ -362,6 +398,18 @@ class GPORTAL_AUTH
         return false;
     }
 
+    public function formatHostname($hostname)
+    {
+        $hostname = htmlspecialchars_decode($hostname);
+        $hostname = preg_replace_callback('/<color=([^>]+)>(.*?)<\/color>/', function ($matches) {
+            $color = $matches[1];
+            return '<span style="color:' . $color . ';">' . $matches[2] . '</span>';
+        }, $hostname);
+        $hostname = preg_replace('/<b>(.*?)<\/b>/', '<strong>$1</strong>', $hostname);
+        $hostname = preg_replace('/<i>(.*?)<\/i>/', '<em>$1</em>', $hostname);
+        $hostname = preg_replace('/<u>(.*?)<\/u>/', '<u>$1</u>', $hostname);
+        return $hostname;
+    }
 
     public function refreshToken()
     {
