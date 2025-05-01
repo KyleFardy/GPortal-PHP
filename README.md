@@ -2,6 +2,13 @@
 
 A Lightweight PHP Wrapper To Authenticate And Retrieve Server Information From GPortal (EU/US Regions).
 
+## 🖼️ Screenshot (Click To Reveal)
+
+<details>
+  <summary>📷 View Preview</summary>
+  <img src="https://cdn.void-hosting.cloud/raw/brave_BgKUnK6L6N.png" alt="GPortal-PHP Preview">
+</details>
+
 ## ✨ Features
 
 - Login Using GPortal Account Credentials  
